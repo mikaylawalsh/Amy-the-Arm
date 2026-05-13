@@ -16,8 +16,9 @@ import cv2
 
 picam2 = Picamera2()
 sensor_width, sensor_height = picam2.camera_properties["PixelArraySize"]
-#picam2.set_controls({"ScalerCrop":(0,0,sensor_width, sensor_height)})
-#picam2.preview_size = (3280, 2464)
+picam2.set_controls({"ScalerCrop":(0,0,sensor_width, sensor_height)})
+picam2.preview_size = (3280, 2464)
+#picam2.preview_size = (5000, 4000)
 
 #camera_config = picam2.create_preview_configuration()#main={"size": (1640, 1232)}) orginal code uses preview, we are testing still to see if we can capture images in BGR
 camera_config = picam2.create_still_configuration()
@@ -64,13 +65,21 @@ def get_hue(rgb_color):
     hsv_color = tuple(hsv_array[0][0])
     return hsv_color[0]
 
+#hues = (
+#    (get_hue(blue), 'p'),
+#    (get_hue(green), 'b'),
+#    (get_hue(red), 'k'),
+#    (get_hue(pink), 'n'),
+#    (get_hue(orange), 'q'),
+#    (get_hue(yellow), 'r')
+#)
 hues = (
-    (get_hue(blue), 'p'),
-    (get_hue(green), 'b'),
-    (get_hue(red), 'k'),
-    (get_hue(pink), 'n'),
-    (get_hue(orange), 'q'),
-    (get_hue(yellow), 'r')
+    (get_hue(blue), 'b'),
+    (get_hue(green), 'g'),
+    (get_hue(red), 'r'),
+    (get_hue(pink), 'p'),
+    (get_hue(orange), 'o'),
+    (get_hue(yellow), 'y')
 )
 
 piece_icon = {
@@ -133,12 +142,12 @@ def get_piece(image, circle):
     # --- Use inner circle brightness to decide black/white piece ---
     mean_inner = cv2.mean(image, mask=mask_inner)
     mean_value_inner = mean_inner[2]  # Value (V) channel
-
-    if mean_value_inner > 128:
+    
+    if mean_value_inner > 100:
         closest_type = closest_type.upper()  # white piece
     else:
         closest_type = closest_type.lower()  # black piece
-
+    print(closest_type, mean_value_inner)
     return closest_type
 
 def piece_coordinate(circle):
@@ -201,15 +210,16 @@ while True:
             break
         image = picam2.capture_image()
         image = picam2.capture_array()#[:, :, :3] - here originally
+        
         bgr_image = image.copy()  # copy to draw on
         bgr_image = cv2.cvtColor(bgr_image, cv2.COLOR_RGB2BGR)
-        print(image.shape) 
+        print(image) 
         
         #cv2.imshow('Original Image', image)
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
         #picam2.stop()
-        #picam2.close() <- here originally
+        #picam2.close() # <- here originally
         #print(image.shape) #img is taken in jpg/png format and we need BGR
        
         # break the loop if no image is taken
@@ -230,12 +240,16 @@ while True:
 
         
               # Convert to grayscale for Hough Circle detection
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (9, 9), 2)
-
+        #cv2.imshow('Blurred image', gray)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
+        #picam2.stop()
+        #picam2.close()
         circles = cv2.HoughCircles(
             blurred, cv2.HOUGH_GRADIENT, 1, 400,
-            param1=20, param2=12, minRadius=60, maxRadius=90) #170, 180 og
+            param1=20, param2=15, minRadius=90, maxRadius=110) #170, 180 og
         print("CIRCLES:", circles)
 
         chess_grid = np.full((8,8), ' ', dtype=str) #originally 8x8
