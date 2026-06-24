@@ -125,19 +125,26 @@ def get_piece(image, circle):
     # --- Sample BGR color in outer ring ---
     mean_bgr = cv2.mean(image, mask=outer_half_mask)[:3]  # B, G, R
     mean_bgr = tuple(map(int, mean_bgr))
-
+    mask_pixels = image[outer_half_mask > 0]
+    median_bgr = np.median(mask_pixels, axis=0)
+    median_bgr = tuple(median_bgr.tolist())
     # --- Convert to HSV for hue ---
-    hsv_color = cv2.cvtColor(np.uint8([[mean_bgr]]), cv2.COLOR_BGR2HSV)[0][0]
+    hsv_color = cv2.cvtColor(np.uint8([[median_bgr]]), cv2.COLOR_BGR2HSV)[0][0]
     piece_type_hue = int(hsv_color[0])
 
     # --- Find the closest hue from reference hues ---
+    print("========================================================")
     closest_type = 'p'
     closest_dist = float('inf')
     for hue, piece_type in hues:
         dist = hue_distance(piece_type_hue, hue)
+        #print(dist)
         if dist < closest_dist:
             closest_dist = dist
             closest_type = piece_type
+    print(closest_dist)
+    print("Median:", median_bgr)
+    print("Mean:", mean_bgr)
 
     # --- Use inner circle brightness to decide black/white piece ---
     mean_inner = cv2.mean(image, mask=mask_inner)
@@ -248,8 +255,10 @@ while True:
         #picam2.stop()
         #picam2.close()
         circles = cv2.HoughCircles(
-            blurred, cv2.HOUGH_GRADIENT, 1, 400,
-            param1=20, param2=15, minRadius=90, maxRadius=110) #170, 180 og
+            blurred, cv2.HOUGH_GRADIENT, 0.5, 330,
+            param1=35, param2=10, minRadius=90, maxRadius=110) #170, 180 og
+            # param1 = EDGE detection confidence, param2 = CIRCLE detection confidence.... What is the difference? I do not know. :)
+            
         print("CIRCLES:", circles)
 
         chess_grid = np.full((8,8), ' ', dtype=str) #originally 8x8
@@ -276,7 +285,7 @@ while True:
 
                 # Add text label (the piece or index)
                 converted_bgr = cv2.cvtColor(bgr_image, cv2.COLOR_HSV2BGR)
-                label = f"{piece}"  # could also use f"{idx}:{piece}"
+                label = f"{idx}:{piece}"  # could also use f"{idx}:{piece}"
                 font_scale = 6
                 thickness = 5
                 text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
