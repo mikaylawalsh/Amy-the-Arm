@@ -20,7 +20,7 @@ dof0_offset_time = 0.0
 # DOF 1 time offset tracking
 # positive -> moved OUT
 # negative -> moved IN
-#dof1_offset_time = 0.0
+dof1_offset_time = 0.0
 
 # Track arrow key press times
 key_press_times = {}
@@ -33,9 +33,9 @@ input1 = 13   # H-Bridge Input 1 (BCM 13)
 input2 = 12   # H-Bridge Input 2 (BCM 12)
 enable1 = 14  # PWM enable 1 (BCM 14)
 
-#input3 = 19   # H-Bridge Input 3 (BCM 19)
-#input4 = 16   # H-Bridge Input 4 (BCM 16)
-#enable2 = 15  # PWM enable 2 (BCM 15)
+input3 = 19   # H-Bridge Input 3 (BCM 19)
+input4 = 16   # H-Bridge Input 4 (BCM 16)
+enable2 = 15  # PWM enable 2 (BCM 15)
 
 
 # -----------------------------
@@ -60,25 +60,25 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(input1, GPIO.OUT)
 GPIO.setup(input2, GPIO.OUT)
 GPIO.setup(enable1, GPIO.OUT)
-#GPIO.setup(input3, GPIO.OUT)
-#GPIO.setup(input4, GPIO.OUT)
-#GPIO.setup(enable2, GPIO.OUT)
+GPIO.setup(input3, GPIO.OUT)
+GPIO.setup(input4, GPIO.OUT)
+GPIO.setup(enable2, GPIO.OUT)
 
 
 # -----------------------------
 # PWM init for DOF 0 and DOF 1
 # -----------------------------
 def init_bot():
-    p1 = GPIO.PWM(enable1, 100)  # DOF 0
-    #p2 = GPIO.PWM(enable2, 100)  # DOF 1
+    p1 = GPIO.PWM(enable1, 25)  # DOF 0
+    p2 = GPIO.PWM(enable2, 100)  # DOF 1
 
-    p1.start(100)
-    #p2.start(100)
+    p1.start(25)
+    p2.start(100)
 
-    return p1  #, p2
+    return p1, p2
 
-p1 = init_bot()                         #SEE IF THIS WORKS
-#@p1, p2 = init_bot()
+#p1 = init_bot()                         #SEE IF THIS WORKS
+p1, p2 = init_bot()
 
 
 # ??
@@ -131,12 +131,33 @@ def turn_left_timed(t, i1, i2):
 
 
 
+# -----------------------------
+# DOF 1 semantic helpers
+# -----------------------------
+def extend_arm():
+    """Physical OUT movement for DOF 1."""
+    turn_right(input3, input4)
+
+
+def retract_arm():
+    """Physical IN movement for DOF 1."""
+    turn_left(input3, input4)
+
+
+def extend_arm_timed(t):
+    """Move DOF 1 OUT for t seconds."""
+    turn_right_timed(t, input3, input4)
+
+
+def retract_arm_timed(t):
+    """Move DOF 1 IN for t seconds."""
+    turn_left_timed(t, input3, input4)
 
 
 def cleanup():
     try:
         p1.stop()
-        #p2.stop()
+        p2.stop()
     except Exception:
         pass
 
@@ -229,6 +250,11 @@ class RobotControlApp:
         self.root.bind("<KeyPress-Left>", self.handle_keypress)
         self.root.bind("<KeyRelease-Right>", self.handle_keyrelease)
         self.root.bind("<KeyRelease-Left>", self.handle_keyrelease)
+        
+        self.root.bind("<KeyPress-Up>", self.handle_keypress)
+        self.root.bind("<KeyPress-Down>", self.handle_keypress)
+        self.root.bind("<KeyRelease-Up>", self.handle_keyrelease)
+        self.root.bind("<KeyRelease-Down>", self.handle_keyrelease)
         
         ## ??? entire function
 
@@ -391,7 +417,7 @@ class RobotControlApp:
        
 
     def handle_keyrelease_0(self, event):
-        global dof0_offset_time#, dof1_offset_time, key_press_times
+        global dof0_offset_time, dof1_offset_time, key_press_times
 
         key = event.keysym
 
