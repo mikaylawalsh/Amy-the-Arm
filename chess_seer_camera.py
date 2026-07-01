@@ -247,16 +247,26 @@ while True:
 
         
               # Convert to grayscale for Hough Circle detection
+        #hsv = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
+        #sat = hsv[:, :, 1]
         gray = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, (9, 9), 2)
-        #cv2.imshow('Blurred image', gray)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
-        #picam2.stop()
-        #picam2.close()
+        #blurred = cv2.GaussianBlur(gray, (9, 9), 2)
+        
+        clahe = cv2.createCLAHE(clipLimit=2.0,tileGridSize=(8,8))
+        enhanced = clahe.apply(gray)
+        blurred = cv2.medianBlur(enhanced, 5)
+		
+        
+        
+        
+        cv2.imshow('Blurred image', gray)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        picam2.stop()
+        picam2.close()
         circles = cv2.HoughCircles(
-            blurred, cv2.HOUGH_GRADIENT, 0.5, 330,
-            param1=35, param2=10, minRadius=90, maxRadius=110) #170, 180 og
+            blurred, cv2.HOUGH_GRADIENT, 1.0, 330,
+            param1=50, param2=25, minRadius=40, maxRadius=60) #170, 180 og
             # param1 = EDGE detection confidence, param2 = CIRCLE detection confidence.... What is the difference? I do not know. :)
             
         print("CIRCLES:", circles)
