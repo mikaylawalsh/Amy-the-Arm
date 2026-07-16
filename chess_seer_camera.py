@@ -109,6 +109,10 @@ def sample_color(image, x, y, size=5):
     
 def get_piece(image, circle):
     x, y, r = map(int, circle)
+    
+    color_inner_r = r
+    color_outer = int(r * 2.0)
+    
 
     # --- Create masks ---
     mask_outer = np.zeros(image.shape[:2], dtype=np.uint8)
@@ -117,18 +121,24 @@ def get_piece(image, circle):
     # Full circle mask
     cv2.circle(mask_outer, (x, y), r, 255, -1)
     # Inner (half-radius) mask
-    cv2.circle(mask_inner, (x, y), int(r * 0.5), 255, -1)
+    cv2.circle(mask_inner, (x, y), int(r * 2), 255, -1)
+
 
     # Outer half mask (the ring area)
     outer_half_mask = cv2.subtract(mask_outer, mask_inner)
+    
 
     # --- Sample BGR color in outer ring ---
-    mean_bgr = cv2.mean(image, mask=outer_half_mask)[:3]  # B, G, R
-    mean_bgr = tuple(map(int, mean_bgr))
+    #mean_bgr = cv2.mean(image, mask=outer_half_mask)[:3]  # B, G, R
+    #mean_bgr = tuple(map(int, mean_bgr))
     mask_pixels = image[outer_half_mask > 0]
+    if len(mask_pixels) == 0:
+        return
     median_bgr = np.median(mask_pixels, axis=0)
     median_bgr = tuple(median_bgr.tolist())
     # --- Convert to HSV for hue ---
+    
+    
     hsv_color = cv2.cvtColor(np.uint8([[median_bgr]]), cv2.COLOR_BGR2HSV)[0][0]
     piece_type_hue = int(hsv_color[0])
 
@@ -149,6 +159,11 @@ def get_piece(image, circle):
     # --- Use inner circle brightness to decide black/white piece ---
     mean_inner = cv2.mean(image, mask=mask_inner)
     mean_value_inner = mean_inner[2]  # Value (V) channel
+    
+    mast_inner = np.zeros(image.shape[:2], dtype = np.uint8)
+    cv2.circle(mask_inner, (x,y), r, 255, -1)
+    inner_pixels = image[mask_inner>0]
+    mean_value_inner = np.mean(cv2.cvtColor(inner_pixels.reshape(-1,1,3), cv2.COLOR_BGR2HSV)[:, :, 2])
     
     if mean_value_inner > 100:
         closest_type = closest_type.upper()  # white piece
@@ -266,7 +281,7 @@ while True:
         picam2.close()
         circles = cv2.HoughCircles(
             blurred, cv2.HOUGH_GRADIENT, 1.0, 330,
-            param1=50, param2=25, minRadius=40, maxRadius=60) #170, 180 og
+            param1=50, param2=25, minRadius=40, maxRadius=60) #170, 180 og -- 30, 60 for smaller
             # param1 = EDGE detection confidence, param2 = CIRCLE detection confidence.... What is the difference? I do not know. :)
             
         print("CIRCLES:", circles)
@@ -277,7 +292,7 @@ while True:
             circles = np.uint16(np.around(circles))
             circles = sorted(circles[0], key=lambda t: (t[0], t[1]))
             for idx, i in enumerate(circles):
-                # Get the predicted piece (label)
+                # Get the predicted 
                 piece = get_piece(bgr_image, i)
                 print(f"Circle {idx}: {piece} at ({i[0]}, {i[1]})")
                 
