@@ -110,18 +110,15 @@ def sample_color(image, x, y, size=5):
 def get_piece(image, circle):
     x, y, r = map(int, circle)
     
-    color_inner_r = r
-    color_outer = int(r * 2.0)
-    
 
     # --- Create masks ---
     mask_outer = np.zeros(image.shape[:2], dtype=np.uint8)
     mask_inner = np.zeros(image.shape[:2], dtype=np.uint8)
 
     # Full circle mask
-    cv2.circle(mask_outer, (x, y), r, 255, -1)
+    cv2.circle(mask_outer, (x, y), int(r * 2.0), 255, -1)
     # Inner (half-radius) mask
-    cv2.circle(mask_inner, (x, y), int(r * 2), 255, -1)
+    cv2.circle(mask_inner, (x, y), r, 255, -1)
 
 
     # Outer half mask (the ring area)
@@ -129,11 +126,9 @@ def get_piece(image, circle):
     
 
     # --- Sample BGR color in outer ring ---
-    #mean_bgr = cv2.mean(image, mask=outer_half_mask)[:3]  # B, G, R
-    #mean_bgr = tuple(map(int, mean_bgr))
+    mean_bgr = cv2.mean(image, mask=outer_half_mask)[:3]  # B, G, R
+    mean_bgr = tuple(map(int, mean_bgr))
     mask_pixels = image[outer_half_mask > 0]
-    if len(mask_pixels) == 0:
-        return
     median_bgr = np.median(mask_pixels, axis=0)
     median_bgr = tuple(median_bgr.tolist())
     # --- Convert to HSV for hue ---
@@ -160,12 +155,9 @@ def get_piece(image, circle):
     mean_inner = cv2.mean(image, mask=mask_inner)
     mean_value_inner = mean_inner[2]  # Value (V) channel
     
-    mast_inner = np.zeros(image.shape[:2], dtype = np.uint8)
-    cv2.circle(mask_inner, (x,y), r, 255, -1)
-    inner_pixels = image[mask_inner>0]
-    mean_value_inner = np.mean(cv2.cvtColor(inner_pixels.reshape(-1,1,3), cv2.COLOR_BGR2HSV)[:, :, 2])
+
     
-    if mean_value_inner > 100:
+    if mean_value_inner > 130:
         closest_type = closest_type.upper()  # white piece
     else:
         closest_type = closest_type.lower()  # black piece
