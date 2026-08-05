@@ -33,8 +33,8 @@ input1 = 13   # H-Bridge Input 1 (BCM 13)
 input2 = 12   # H-Bridge Input 2 (BCM 12)
 enable1 = 14  # PWM enable 1 (BCM 14)
 
-input3 = 19   # H-Bridge Input 3 (BCM 19)
-input4 = 16   # H-Bridge Input 4 (BCM 16)
+input3 = 16   # H-Bridge Input 3 (BCM 19)
+input4 = 19   # H-Bridge Input 4 (BCM 16)
 enable2 = 15  # PWM enable 2 (BCM 15)
 
 
